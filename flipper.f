@@ -1,0 +1,211 @@
+      IMPLICIT REAL*8(A-H,O-Z)
+      CHARACTER*80 LINE,PREF
+      CHARACTER*100 LINE1,LINE2
+      INTEGER,DIMENSION(:),ALLOCATABLE :: NPT
+      REAL*8,DIMENSION(:),ALLOCATABLE :: CUP,CDN,CDNUP,CDNDN,FACT,FACTI
+      WRITE(6,*)'ENTER case'
+      READ(5,*)PREF
+      OPEN(4,FILE=TRIM(PREF)//'.struct',FORM='FORMATTED',STATUS='OLD')
+      READ(4,'(A80)')LINE
+      READ(4,'(27X,I3)')NAT
+      ALLOCATE(NPT(NAT))
+      NPMAX=0
+      READ(4,'(A80)')LINE
+      READ(4,'(A80)')LINE
+      DO IA=1,NAT
+      READ(4,'(A80)')LINE
+      READ(4,'(15X,I2)')MULT
+      DO I=1,MULT-1
+      READ(4,'(A80)')LINE
+      ENDDO
+      READ(4,'(15X,I5)')NPT(IA)
+      NPMAX=MAX(NPMAX,NPT(IA))
+      DO I=1,3
+      READ(4,'(A80)')LINE
+      ENDDO
+      ENDDO
+      CLOSE(4)
+      ALLOCATE(CDNUP(NPMAX))
+      ALLOCATE(CDNDN(NPMAX))
+      ALLOCATE(FACT(0:NAT))
+      ALLOCATE(FACTI(0:NAT))
+      WRITE(6,*)'Enter interstitial polarization factor'
+      READ(5,*)FACT(0)
+      WRITE(6,*)'Enter atomic polarization factors'
+      READ(5,*)(FACT(I),I=1,NAT)
+      DO I=0,NAT
+      FACT(I)=0.5D0*(FACT(I)+1.D0)
+      FACTI(I)=1.D0-FACT(I)
+      ENDDO
+C
+      OPEN(11,FILE=TRIM(PREF)//'.clmup',FORM='FORMATTED',STATUS='OLD')
+      OPEN(12,
+     * FILE=TRIM(PREF)//'.clmvalup',FORM='FORMATTED',STATUS='OLD')
+      OPEN(13,
+     * FILE=TRIM(PREF)//'.clmcorup',FORM='FORMATTED',STATUS='OLD')
+      OPEN(14,FILE=TRIM(PREF)//'.clmdn',FORM='FORMATTED',STATUS='OLD')
+      OPEN(15,
+     * FILE=TRIM(PREF)//'.clmvaldn',FORM='FORMATTED',STATUS='OLD')
+      OPEN(16,
+     * FILE=TRIM(PREF)//'.clmcordn',FORM='FORMATTED',STATUS='OLD')
+      OPEN(21,FILE='new.clmup',FORM='FORMATTED',STATUS='UNKNOWN')
+      OPEN(22,FILE='new.clmvalup',FORM='FORMATTED',STATUS='UNKNOWN')
+      OPEN(23,FILE='new.clmcorup',FORM='FORMATTED',STATUS='UNKNOWN')
+      OPEN(24,FILE='new.clmdn',FORM='FORMATTED',STATUS='UNKNOWN')
+      OPEN(25,FILE='new.clmvaldn',FORM='FORMATTED',STATUS='UNKNOWN')
+      OPEN(26,FILE='new.clmcordn',FORM='FORMATTED',STATUS='UNKNOWN')
+      DO J=1,3
+      DO I=1,3
+      READ(10+J,'(A80)')LINE
+      WRITE(20+J,'(A80)')LINE
+      READ(13+J,'(A80)')LINE
+      WRITE(23+J,'(A80)')LINE
+      ENDDO
+      ENDDO
+C
+      DO NA=1,NAT
+C CLM
+      READ(11,'(A80)')LINE
+      READ(LINE,'(15X,I3)')IA
+      IF(IA.NE.NA)STOP'ERROR IA'
+      WRITE(21,'(A80)')LINE
+      READ(14,'(A80)')LINE
+      READ(LINE,'(15X,I3)')IA
+      IF(IA.NE.NA)STOP'ERROR IA'
+      WRITE(24,'(A80)')LINE
+      READ(11,'(A80)')LINE
+      READ(LINE,'(15X,I3)')LMMAX
+      WRITE(21,'(A80)')LINE
+      READ(14,'(A80)')LINE
+      READ(LINE,'(15X,I3)')LMMAX
+      WRITE(24,'(A80)')LINE
+      DO LM=1,LMMAX
+      DO I=1,4
+      READ(11,'(A80)')LINE
+      WRITE(21,'(A80)')LINE
+      READ(14,'(A80)')LINE
+      WRITE(24,'(A80)')LINE
+      ENDDO
+      READ(11,'(3X,4F19.0)')(CDNUP(I),I=1,NPT(NA))
+      READ(14,'(3X,4F19.0)')(CDNDN(I),I=1,NPT(NA))
+      WRITE(21,'(3X,4ES19.12)')(FACT(NA)*CDNUP(I)+FACTI(NA)*CDNDN(I),
+     *     I=1,NPT(NA))
+      WRITE(24,'(3X,4ES19.12)')(FACTI(NA)*CDNUP(I)+FACT(NA)*CDNDN(I),
+     *     I=1,NPT(NA))
+      ENDDO
+C CLMVAL
+      READ(12,'(A80)')LINE
+      READ(LINE,'(15X,I4)')IA
+      IF(IA.NE.NA)STOP'ERROR IA'
+      WRITE(22,'(A80)')LINE
+      READ(15,'(A80)')LINE
+      READ(LINE,'(15X,I4)')IA
+      IF(IA.NE.NA)STOP'ERROR IA'
+      WRITE(25,'(A80)')LINE
+      READ(12,'(A80)')LINE
+      READ(LINE,'(15X,I3)')LMMAX
+      WRITE(22,'(A80)')LINE
+      READ(15,'(A80)')LINE
+      READ(LINE,'(15X,I3)')LMMAX
+      WRITE(25,'(A80)')LINE
+      DO LM=1,LMMAX
+      DO I=1,4
+      READ(12,'(A80)')LINE
+      WRITE(22,'(A80)')LINE
+      READ(15,'(A80)')LINE
+      WRITE(25,'(A80)')LINE
+      ENDDO
+      READ(12,'(3X,4F19.0)')(CDNUP(I),I=1,NPT(NA))
+      READ(15,'(3X,4F19.0)')(CDNDN(I),I=1,NPT(NA))
+      WRITE(22,'(3X,4ES19.12)')(FACT(NA)*CDNUP(I)+FACTI(NA)*CDNDN(I),
+     *     I=1,NPT(NA))
+      WRITE(25,'(3X,4ES19.12)')(FACTI(NA)*CDNUP(I)+FACT(NA)*CDNDN(I),
+     *     I=1,NPT(NA))
+      ENDDO
+C CLMCOR
+      READ(13,'(A80)')LINE
+      READ(LINE,'(15X,I3)')IA
+      IF(IA.NE.NA)STOP'ERROR IA'
+      WRITE(23,'(A80)')LINE
+      READ(16,'(A80)')LINE
+      READ(LINE,'(15X,I3)')IA
+      IF(IA.NE.NA)STOP'ERROR IA'
+      WRITE(26,'(A80)')LINE
+      READ(13,'(A80)')LINE
+      READ(LINE,'(15X,I3)')LMMAX
+      WRITE(23,'(A80)')LINE
+      READ(16,'(A80)')LINE
+      READ(LINE,'(15X,I3)')LMMAX
+      WRITE(26,'(A80)')LINE
+      DO LM=1,LMMAX
+      DO I=1,4
+      READ(13,'(A80)')LINE
+      WRITE(23,'(A80)')LINE
+      READ(16,'(A80)')LINE
+      WRITE(26,'(A80)')LINE
+      ENDDO
+      READ(13,'(3X,4F19.0)')(CDNUP(I),I=1,NPT(NA))
+      READ(16,'(3X,4F19.0)')(CDNDN(I),I=1,NPT(NA))
+      WRITE(23,'(3X,4ES19.12)')(FACT(NA)*CDNUP(I)+FACTI(NA)*CDNDN(I),
+     *     I=1,NPT(NA))
+      WRITE(26,'(3X,4ES19.12)')(FACTI(NA)*CDNUP(I)+FACT(NA)*CDNDN(I),
+     *     I=1,NPT(NA))
+      ENDDO
+C
+      DO I=1,6
+      DO IU=1,6
+      READ(10+IU,'(A80)')LINE
+      WRITE(20+IU,'(A80)')LINE
+      ENDDO
+      ENDDO
+      ENDDO
+      CLOSE(13)
+      CLOSE(16)
+      CLOSE(23)
+      CLOSE(26)
+C
+      DO I=1,2
+      READ(11,'(A80)')LINE
+      WRITE(21,'(A80)')LINE
+      READ(12,'(A80)')LINE
+      WRITE(22,'(A80)')LINE
+      READ(14,'(A80)')LINE
+      WRITE(24,'(A80)')LINE
+      READ(15,'(A80)')LINE
+      WRITE(25,'(A80)')LINE
+      ENDDO
+C
+      READ(11,'(A100)')LINE1
+      WRITE(21,'(A100)')LINE1
+      READ(LINE1,'(11X,I8)')NPW
+      READ(14,'(A100)')LINE1
+      WRITE(24,'(A100)')LINE1
+      READ(LINE1,'(11X,I8)')NPW
+      DO N=1,NPW
+      READ(11,'(A100)')LINE1
+      READ(14,'(A100)')LINE2
+      READ(LINE1,'(3X,3I5,2F19.0)')I1,I2,I3,(CDNUP(I),I=1,2)
+      READ(LINE2,'(3X,3I5,2F19.0)')I1,I2,I3,(CDNDN(I),I=1,2)
+      WRITE(21,'(3X,3I5,2ES19.12,A44)')I1,I2,I3,
+     * (FACT(0)*CDNUP(I)+FACTI(0)*CDNDN(I),I=1,2),LINE1(57:100)
+      WRITE(24,'(3X,3I5,2ES19.12,A44)')I1,I2,I3,
+     * (FACTI(0)*CDNUP(I)+FACT(0)*CDNDN(I),I=1,2),LINE2(57:100)
+      ENDDO
+C
+      READ(12,'(A80)')LINE
+      WRITE(22,'(A80)')LINE
+      READ(LINE,'(10X,I9)')NPW
+      READ(15,'(A80)')LINE
+      WRITE(25,'(A80)')LINE
+      READ(LINE,'(10X,I9)')NPW
+      DO N=1,NPW
+      READ(12,'(3X,3I5,2F19.0)')I1,I2,I3,(CDNUP(I),I=1,2)
+      READ(15,'(3X,3I5,2F19.0)')I1,I2,I3,(CDNDN(I),I=1,2)
+      WRITE(22,'(3X,3I5,2ES19.12)')I1,I2,I3,
+     * (FACT(0)*CDNUP(I)+FACTI(0)*CDNDN(I),I=1,2)
+      WRITE(25,'(3X,3I5,2ES19.12)')I1,I2,I3,
+     * (FACTI(0)*CDNUP(I)+FACT(0)*CDNDN(I),I=1,2)
+      ENDDO
+C
+      STOP
+      END
